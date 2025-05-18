@@ -1,4 +1,6 @@
 
+using Serilog;
+
 namespace MagicVilla_API
 {
     public class Program
@@ -9,6 +11,19 @@ namespace MagicVilla_API
 
             // Add services to the container.
 
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+            var logConfig = new ConfigurationBuilder().AddJsonFile($"appsettings.{environment}.json").Build();
+
+            Log.Logger = new LoggerConfiguration()
+                       .ReadFrom.Configuration(logConfig)   
+                       .CreateLogger();
+
+            builder.Host.UseSerilog();  
+
+
+
+
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -17,20 +32,34 @@ namespace MagicVilla_API
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            try
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                Log.Information("Maggic API has started");
+                if (app.Environment.IsDevelopment())
+                {
+                    app.UseSwagger();
+                    app.UseSwaggerUI();
+                }
+
+                app.UseHttpsRedirection();
+
+                app.UseAuthorization();
+
+
+                app.MapControllers();
+
+                app.Run();
             }
+            catch (Exception ex)
+            {
 
-            app.UseHttpsRedirection();
+                Log.Error(ex, "Fatai API not starting");
+            }
+            finally
+            {
+                Log.CloseAndFlushAsync();
 
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
+            }
         }
     }
 }
