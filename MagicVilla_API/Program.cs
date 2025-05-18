@@ -1,4 +1,6 @@
 
+using MagicVilla_API.DataContext;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace MagicVilla_API
@@ -11,20 +13,21 @@ namespace MagicVilla_API
 
             // Add services to the container.
 
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
             var logConfig = new ConfigurationBuilder().AddJsonFile($"appsettings.{environment}.json").Build();
 
-            Log.Logger = new LoggerConfiguration()
-                       .ReadFrom.Configuration(logConfig)   
-                       .CreateLogger();
+            Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(logConfig).CreateLogger();
 
-            builder.Host.UseSerilog();  
+            builder.Host.UseSerilog();
 
-
-
+            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
             builder.Services.AddControllers();
+
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
